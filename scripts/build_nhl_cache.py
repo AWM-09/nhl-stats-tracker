@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build same-origin NHL Stats REST cache for GitHub Pages."""
 import json, os, pathlib, time, urllib.parse, urllib.request, urllib.error
+from datetime import datetime, timedelta, timezone
 
 OUT = pathlib.Path("site/data/seasons")
 OUT.mkdir(parents=True, exist_ok=True)
@@ -67,6 +68,9 @@ if success == 0:
 
 
 # Cache the entire current NHL season as weekly schedule snapshots for the full calendar.
+today = datetime.now(timezone.utc).date()
+schedule_dir = ROOT / "schedule"
+schedule_dir.mkdir(parents=True, exist_ok=True)
 season_start = today.year if today.month >= 8 else today.year - 1
 week_anchor = datetime(season_start, 8, 1, tzinfo=timezone.utc).date()
 season_end = datetime(season_start + 1, 7, 31, tzinfo=timezone.utc).date()
