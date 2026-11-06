@@ -11,7 +11,7 @@ const c$=id=>document.getElementById(id),now=new Date(),seasonStart=now.getUTCMo
 function iso(d){return d.toISOString().slice(0,10)}function addDays(s,n){const d=new Date(s+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return iso(d)}
 function anchorWeek(date){const d=new Date(date+'T12:00:00Z'),base=new Date(Date.UTC(seasonStart,7,1)),delta=Math.floor((d-base)/86400000),step=Math.floor(delta/7);base.setUTCDate(base.getUTCDate()+step*7);return iso(base)}
 function statusOf(g){const s=String(g.gameState||g.gameScheduleState||'').toUpperCase();if(['FINAL','OFF','OVER','CRIT'].includes(s))return'FINAL';if(['LIVE','IN_PROGRESS','IN PROGRESS'].includes(s))return'LIVE';return'FUT'}
-function abbrev(t){return t?.abbrev||t?.teamAbbrev||t?.teamName?.default||'—'}
+function abbrev(t){return scalarText(t?.abbrev||t?.teamAbbrev||t?.teamName)||'—'}
 function localTime(g){const d=new Date(g.startTimeUTC||g.gameDate+'T00:00:00Z');return Number.isNaN(+d)?'Time TBC':d.toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'})}
 function extractGames(payload){if(Array.isArray(payload.games))return payload.games;if(Array.isArray(payload.gameWeek))return payload.gameWeek.flatMap(d=>Array.isArray(d.games)?d.games:[]);if(Array.isArray(payload.gameWeek?.games))return payload.gameWeek.games;return []}
 function weekStart(date){const d=new Date(date+'T12:00:00Z'),day=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-day);return iso(d)}
