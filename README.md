@@ -1,30 +1,42 @@
-# NHL 2026–27 Stats Tracker
+# AlexMyrusTalksSports — NHL Analytics Platform
 
-A fan-made NHL player and goalie statistics dashboard for the 2026–27 regular season.
+A fan-made multi-page NHL statistics and research platform styled to match the dark dashboard design used by the NFL tracker.
 
-## Features
-- Week 1–6 filters (seven-day windows beginning 7 October 2026)
-- Select individual games or include all games in the selected weeks
-- Skater and goalie stat categories
-- Team, position, and player search filters
-- Weekly leaderboards, cumulative totals, comparisons, team view, charts, and CSV export
-- Loads game schedules and completed-game boxscores from the NHL public web API
+## Platform
 
-## Data and refresh behavior
-The dashboard requests the latest available schedule and boxscore data from the NHL public web API when the page is opened and when **Refresh data** is pressed. GitHub Actions also republishes the site daily, matching the NFL tracker setup, but the daily deployment itself does not download or store a separate stats file: the NHL data is fetched by the dashboard in the visitor's browser.
+- NHL Stats Tracker — historical season selector, regular-season/playoff filters, separate skater and goalie leaderboards, per-game data mode where supplied by the upstream API, team/position/player filters, player comparisons, team views, statistical facts, content drafts and CSV export.
+- Player Profiles — search by player name or NHL player ID, player landing details, season statistics and game logs.
+- Team Platform — team summary rankings, franchise roster lookup and team comparison cards.
+- Advanced Lab — skater realtime, scoring-rate, possession, faceoff, power-play, penalty-kill and time-on-ice reports, plus goalie-specific reports.
+- Research Lab — player season-to-season comparisons and season leader searches.
+- Calendar & Game Centre — date-range schedule, scores and game boxscores.
+- News & League Hub — links to original NHL reporting, plus a live scoreboard and current standings.
+- Records Explorer — single-season and single-game rankings for the chosen season and phase.
+- System Health — checks whether all static pages are published and whether the same-origin NHL data cache is reachable.\n- Predictions & Draft Centre — projects the 82-game standings pace, generates a divisional playoff bracket, makes a transparent baseline Stanley Cup pick, and estimates the non-playoff draft order.
 
-The NHL API is public but not an official guaranteed/stable developer API. If its endpoints or response format change, the tracker may need an update. A browser/network restriction or temporary NHL API outage can also prevent loading.
+## NHL statistics
 
-## Deploy on GitHub Pages
-1. Create a public GitHub repository named `nhl-2026-stats-tracker`.
-2. Upload `index.html`, `README.md`, and the `.github` folder from this package to the repository's `main` branch. The `data` folder is optional and currently empty.
-3. Open **Settings → Pages** and set the build/deployment source to **GitHub Actions**.
-4. Open **Actions**, select **Deploy NHL tracker**, and choose **Run workflow**.
-5. Once the workflow succeeds, the dashboard should be available at:
-   `https://YOUR-GITHUB-USERNAME.github.io/nhl-2026-stats-tracker/`
+The dashboard keeps skater and goalie datasets separate. Skater categories include points, goals, assists, plus/minus, penalty minutes, power-play points, short-handed goals, shots, shooting percentage and games played. Goalie categories include wins, losses, overtime losses, save percentage, goals-against average, shutouts, saves and shots against.
 
-## Daily deployment
-The workflow can also be run manually from Actions. It is scheduled daily at 10:17 UTC. GitHub schedule times use UTC, so the displayed UK local time shifts when daylight saving time changes.
+The Advanced Lab exposes report-based statistics such as hits, blocked shots, takeaways, giveaways, possession metrics, scoring rates, faceoffs, special teams and time on ice where those reports return the selected fields.
 
-## Important
-This is an independent fan-made tracker and is not affiliated with the NHL. Statistics are provided by the NHL public web API.
+Season selection spans 1950–51 through the current configured season. Actual coverage depends on the NHL source: older seasons will not contain every modern metric. Missing values remain unavailable rather than being silently converted to zero.
+
+## Data sources and limitations
+
+The site uses endpoints from the NHL Web API (api-web.nhle.com) and NHL Stats REST API (api.nhle.com/stats/rest). These are undocumented public endpoints and can change without notice. The endpoint reference used during development is community-maintained: https://github.com/pseudo-r/Public-NHL-API. It is not an official NHL developer contract.
+
+GitHub Actions fetches NHL Stats REST summaries and NHL Web API standings, scoreboard, schedule and recent boxscores server-side, then publishes same-origin JSON files with the static site. This avoids browser CORS failures for the cached datasets. The cache refreshes on pushes and the scheduled workflow. Player biography details are not yet included in the static cache. Individual player game rows are cached for 2024–25 onward; older game logs remain unavailable in this static build and are labelled accordingly.
+
+The Predictions & Draft Centre uses points-per-game pace multiplied by 82 for regular-season projections. Its playoff picks are a transparent baseline based on projected seeds, not a trained probability model. Draft order is an inverse-standings estimate before lottery results and does not model traded or conditional picks.\n\nThe Records Explorer deliberately labels its output as selected-season/single-game rankings. It does not claim to be a complete all-time NHL record book. The platform should only make that claim after a verified historical data warehouse and coverage audit exist.
+
+## Development and deployment
+
+1. Keep the repository's GitHub Pages source set to GitHub Actions.
+2. The workflow named "Validate and deploy NHL analytics platform" runs on pushes to main, manually, and daily at 10:17 UTC.
+3. The workflow checks every required page and stylesheet, runs node syntax checks on the shared JavaScript and syntax-checks every inline page script.
+4. It copies the complete multi-page platform into the Pages artifact and writes build metadata used by System Health.
+
+## Project status
+
+Independent fan-made project. Not affiliated with or endorsed by the NHL.
