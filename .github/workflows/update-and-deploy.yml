@@ -107,6 +107,24 @@ jobs:
                   elif suffix == "roster" and not isinstance(payload, dict):
                       raise SystemExit(f"Unexpected team roster schema: {path}")
           print(f"Validated {len(teams)} team caches; {len(errors)} are unavailable from the upstream NHL API and will show as unavailable in the UI.")
+          h2h_root = Path("site/data/h2h")
+          pair_files = list(h2h_root.glob("*.json"))
+          expected_pairs = len(teams) * (len(teams) - 1) // 2
+          if len(pair_files) != expected_pairs:
+              raise SystemExit(f"All-time H2H cache incomplete: expected {expected_pairs} pairs, found {len(pair_files)}")
+          total_games = 0
+          for path in pair_files:
+              try:
+                  payload = json.loads(path.read_text(encoding="utf-8"))
+              except Exception as exc:
+                  raise SystemExit(f"Invalid all-time H2H data {path}: {exc}")
+              games = payload.get("games")
+              if not isinstance(games, list):
+                  raise SystemExit(f"Unexpected all-time H2H schema: {path}")
+              if any(not game.get("gameDate") or game.get("homeTeam", {}).get("score") is None or game.get("awayTeam", {}).get("score") is None for game in games):
+                  raise SystemExit(f"Incomplete score/date in all-time H2H data: {path}")
+              total_games += len(games)
+          print(f"Validated {len(pair_files)} all-time H2H pair files with {total_games} completed games.")
           PY
           if [ -d data ]; then cp -R data site/data; fi
           GENERATED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"

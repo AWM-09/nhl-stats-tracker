@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Build same-origin NHL Stats REST cache for GitHub Pages."""
-import json, os, pathlib, time, urllib.parse, urllib.request, urllib.error
+import json, os, pathlib, time, urllib.parse, urllib.request, urllib.error, itertools
 from datetime import datetime, timedelta, timezone
 
 OUT = pathlib.Path("site/data/seasons")
@@ -48,6 +48,59 @@ for code in TEAM_CODES:
     write_snapshot(f"teams/{code}-roster.json", f"https://api-web.nhle.com/v1/roster/{code}/current")
     for start in (current_season_start - 1, current_season_start):
         write_snapshot(f"teams/{code}-schedule-{start}.json", f"https://api-web.nhle.com/v1/club-schedule-season/{code}/{start}{start+1}")
+
+# Build every all-time franchise matchup from the NHL Stats game table. The
+# table returns completed regular-season and playoff games with historic team
+# IDs, scores and dates; team IDs are grouped by the NHL franchise lookup.
+team_payload = fetch("https://api.nhle.com/stats/rest/en/team?limit=-1")
+team_records = team_payload.get("data") if isinstance(team_payload, dict) else None
+if not isinstance(team_records, list) or not team_records:
+    raise SystemExit("NHL team identity lookup returned an unexpected schema.")
+current_by_code = {}
+for code in TEAM_CODES:
+    candidates = [row for row in team_records if row.get("triCode") == code and row.get("franchiseId") is not None]
+    if not candidates:
+        raise SystemExit(f"NHL team identity lookup has no franchise for {code}.")
+    current_by_code[code] = max(candidates, key=lambda row: int(row.get("id", 0)))
+franchise_to_code = {}
+for code, row in current_by_code.items():
+    franchise = int(row["franchiseId"])
+    if franchise in franchise_to_code:
+        raise SystemExit(f"NHL franchise lookup maps more than one current team to franchise {franchise}.")
+    franchise_to_code[franchise] = code
+team_id_to_code = {}
+team_id_to_name = {}
+for row in team_records:
+    franchise = row.get("franchiseId")
+    if franchise is not None and int(franchise) in franchise_to_code:
+        team_id_to_code[int(row["id"])] = franchise_to_code[int(franchise)]
+        team_id_to_name[int(row["id"])] = row.get("fullName") or row.get("triCode") or "Historical NHL team"
+
+game_params = urllib.parse.urlencode({"limit": "-1", "cayenneExp": "gameType>=2 and gameStateId=7"})
+game_payload = fetch(f"{BASE}/game?{game_params}")
+all_games = game_payload.get("data") if isinstance(game_payload, dict) else None
+if not isinstance(all_games, list) or not all_games or len(all_games) != int(game_payload.get("total", -1)):
+    raise SystemExit("All-time NHL game cache is incomplete or has an unexpected schema.")
+h2h_dir = ROOT / "h2h"
+h2h_dir.mkdir(parents=True, exist_ok=True)
+pair_games = {tuple(sorted(pair)): [] for pair in itertools.combinations(TEAM_CODES, 2)}
+for game in all_games:
+    home_id, away_id = int(game.get("homeTeamId", 0)), int(game.get("visitingTeamId", 0))
+    home_code, away_code = team_id_to_code.get(home_id), team_id_to_code.get(away_id)
+    if not home_code or not away_code or home_code == away_code:
+        continue
+    pair = tuple(sorted((home_code, away_code)))
+    pair_games[pair].append({
+        "id": game.get("id"), "gameDate": game.get("gameDate"),
+        "season": game.get("season"), "gameType": game.get("gameType"),
+        "homeTeam": {"franchiseCode": home_code, "name": team_id_to_name.get(home_id), "score": game.get("homeScore")},
+        "awayTeam": {"franchiseCode": away_code, "name": team_id_to_name.get(away_id), "score": game.get("visitingScore")},
+    })
+for (first, second), games in pair_games.items():
+    games.sort(key=lambda item: (item.get("gameDate") or "", int(item.get("id") or 0)), reverse=True)
+    target = h2h_dir / f"{first}-{second}.json"
+    target.write_text(json.dumps({"first": first, "second": second, "source": "NHL Stats REST game and franchise tables", "games": games}, separators=(",", ":")), encoding="utf-8")
+print(f"Cached all-time NHL matchup history for {len(pair_games)} franchise pairs ({sum(map(len, pair_games.values()))} completed games).")
 
 success = failures = 0
 for year in YEARS:
