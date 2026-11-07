@@ -37,6 +37,18 @@ def write_snapshot(name, url):
 write_snapshot("standings-now.json", "https://api-web.nhle.com/v1/standings/now")
 write_snapshot("score-now.json", "https://api-web.nhle.com/v1/score/now")
 
+# Current rosters and recent complete season schedules power team dossiers and H2H.
+# Keep these same-origin so GitHub Pages does not depend on browser CORS access.
+TEAM_CODES = ("ANA", "UTA", "BOS", "BUF", "CGY", "CAR", "CHI", "COL", "CBJ", "DAL", "DET", "EDM", "FLA", "LAK", "MIN", "MTL", "NSH", "NJD", "NYI", "NYR", "OTT", "PHI", "PIT", "SEA", "SJS", "STL", "TBL", "TOR", "VAN", "VGK", "WPG", "WSH")
+today = datetime.now(timezone.utc).date()
+current_season_start = today.year if today.month >= 8 else today.year - 1
+team_dir = ROOT / "teams"
+team_dir.mkdir(parents=True, exist_ok=True)
+for code in TEAM_CODES:
+    write_snapshot(f"teams/{code}-roster.json", f"https://api-web.nhle.com/v1/roster/{code}/current")
+    for start in (current_season_start - 1, current_season_start):
+        write_snapshot(f"teams/{code}-schedule-{start}.json", f"https://api-web.nhle.com/v1/club-schedule-season/{code}/{start}{start+1}")
+
 success = failures = 0
 for year in YEARS:
     season = f"{year}{year+1}"

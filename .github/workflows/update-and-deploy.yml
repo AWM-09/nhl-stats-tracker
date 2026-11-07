@@ -27,12 +27,12 @@ jobs:
       - name: Validate required platform files
         run: |
           set -euo pipefail
-          for file in index.html tracker.html player.html teams.html research.html calendar.html news.html records.html health.html predictions.html nhl.css nhl.js favicon.svg; do
+          for file in index.html tracker.html player.html teams.html team.html h2h.html teams.js team.js h2h.js research.html calendar.html news.html records.html health.html predictions.html nhl.css nhl.js favicon.svg; do
             test -s "$file" || { echo "Missing required platform file: $file"; exit 1; }
           done
           grep -qi 'NHL' index.html
           grep -q 'NHL Stats' tracker.html
-          node --check nhl.js
+          for file in nhl.js teams.js team.js h2h.js; do node --check "$file"; done
 
       - name: Validate inline JavaScript in dashboard pages
         run: |
@@ -43,7 +43,7 @@ jobs:
           import tempfile
 
           pages = [
-              "index.html", "tracker.html", "player.html", "teams.html",
+              "index.html", "tracker.html", "player.html", "teams.html", "team.html", "h2h.html",
               "research.html", "calendar.html",
               "news.html", "records.html", "health.html", "predictions.html"
           ]
@@ -81,7 +81,33 @@ jobs:
                   raise SystemExit(f"Invalid weekly schedule cache: {path}")
           print(f"Validated {len(weeks)} full-season calendar weeks.")
           PY
-          cp index.html tracker.html player.html teams.html research.html calendar.html news.html records.html health.html predictions.html nhl.css nhl.js favicon.svg site/
+          cp index.html tracker.html player.html teams.html team.html h2h.html research.html calendar.html news.html records.html health.html predictions.html nhl.css nhl.js teams.js team.js h2h.js favicon.svg site/
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import datetime, timezone
+          teams = "ANA UTA BOS BUF CGY CAR CHI COL CBJ DAL DET EDM FLA LAK MIN MTL NSH NJD NYI NYR OTT PHI PIT SEA SJS STL TBL TOR VAN VGK WPG WSH".split()
+          today = datetime.now(timezone.utc)
+          season_start = today.year if today.month >= 8 else today.year - 1
+          root = Path("site/data/teams")
+          errors = []
+          for code in teams:
+              for suffix in ("roster", f"schedule-{season_start-1}", f"schedule-{season_start}"):
+                  path = root / f"{code}-{suffix}.json"
+                  if not path.is_file():
+                      raise SystemExit(f"Missing team cache: {path}")
+                  try:
+                      payload = json.loads(path.read_text(encoding="utf-8"))
+                  except Exception as exc:
+                      raise SystemExit(f"Invalid team cache {path}: {exc}")
+                  if payload.get("cache_error"):
+                      errors.append(str(path))
+                  elif suffix.startswith("schedule-") and not isinstance(payload.get("games"), list):
+                      raise SystemExit(f"Unexpected team schedule schema: {path}")
+                  elif suffix == "roster" and not isinstance(payload, dict):
+                      raise SystemExit(f"Unexpected team roster schema: {path}")
+          print(f"Validated {len(teams)} team caches; {len(errors)} are unavailable from the upstream NHL API and will show as unavailable in the UI.")
+          PY
           if [ -d data ]; then cp -R data site/data; fi
           GENERATED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           printf '{"generated_at":"%s","commit":"%s","run_id":"%s"}\n' "$GENERATED_AT" "$GITHUB_SHA" "$GITHUB_RUN_ID" > site/build-info.json
