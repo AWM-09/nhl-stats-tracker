@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#09111a">
+<title>NHL Rulebook | AlexMyrusTalksSports</title>
+<link rel="icon" href="./favicon.svg">
+<link rel="stylesheet" href="./nhl.css">
+<style>
+.rule-topics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.rule-topic{padding:16px;border:1px solid var(--line);border-radius:13px;background:linear-gradient(155deg,rgba(23,40,56,.97),rgba(14,26,38,.97))}.rule-topic h3{margin:0 0 8px}.rule-topic p{color:var(--muted);font-size:13px;margin:0 0 12px}.rule-topic a{font-weight:750}.rule-search{max-width:520px}@media(max-width:760px){.rule-topics{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main>
+<header class="top"><div><div class="eyebrow">Official NHL rules reference</div><h1 class="title">NHL <span style="color:var(--accent)">Rulebook</span></h1><div class="subtitle">Open the current official rulebook or browse the NHL’s video explanations of penalties, game flow and video review.</div></div><div class="actions"><a href="./index.html">Home</a><a href="./tracker.html">Stats Tracker</a><a href="./teams.html">Teams</a><a href="./calendar.html">Game Centre</a></div></header>
+<section class="panel"><div class="panel-head"><h2>Official rules · 2026–27</h2><span class="tag">NATIONAL HOCKEY LEAGUE</span></div><p class="muted">The NHL’s Video Rulebook page currently links the 2026–27 Official Rules PDF and provides official example videos. Use the NHL source for the full wording and current interpretation.</p><div class="actions"><a class="button primary" href="https://media.d3.nhle.com/image/private/t_document/prd/i9yumvyaojps5kixzaxz.pdf" target="_blank" rel="noopener">Open 2026–27 Official Rules PDF ↗</a><a class="button" href="https://www.nhl.com/info/video-rulebook" target="_blank" rel="noopener">Open NHL Video Rulebook ↗</a></div><div class="notice" style="margin-top:14px">The PDF is hosted by NHL.com and may take a moment to load. Rule interpretations and enforcement can change by season; check the current NHL source when a specific play or call matters.</div></section>
+<section class="panel"><div class="panel-head"><h2>Find a rule topic</h2><span class="tag">OFFICIAL VIDEO INDEX</span></div><div class="field rule-search"><label for="ruleSearch">Search topics</label><input id="ruleSearch" type="search" placeholder="Try icing, offside, penalties or review"></div><div class="rule-topics" id="topics" style="margin-top:14px"></div><div id="noTopics" class="notice" hidden>No matching topic. Try another search term or open the full rulebook.</div></section>
+<footer class="foot">Rule text and official explanations belong to the National Hockey League. This page is an index and is not a substitute for the official rulebook.</footer>
+</main>
+<script>
+const officialVideoBook='https://www.nhl.com/info/video-rulebook';
+const topics=[
+{title:'Restraining fouls',terms:'holding hooking interference tripping',examples:'Holding · Hooking · Interference · Tripping'},
+{title:'Stick fouls',terms:'high-sticking butt-ending cross-checking slashing spearing',examples:'High-sticking · Butt-ending · Cross-checking · Slashing · Spearing'},
+{title:'Physical fouls',terms:'boarding checking from behind clipping elbowing fighting head-butting illegal check head kicking kneeing roughing slew-footing',examples:'Boarding · Checking from behind · Fighting · Illegal check to the head · Roughing'},
+{title:'Other fouls',terms:'delay of game penalty shot goalie interference embellishment too many men handling puck face-off violation helmet',examples:'Delaying the game · Penalty shot · Goalie interference · Too many men · Face-off violation'},
+{title:'Game flow',terms:'icing high-sticked puck hand pass offside delayed offside possession control',examples:'Icing · High-sticking the puck · Hand pass · Offside'},
+{title:'Video review',terms:'goal line net dislodged kicked puck batted in continuous play major match penalty review',examples:'Puck crossing goal line · Net dislodged · Kicking motion · Puck batted in'}
+];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function renderTopics(){const q=document.getElementById('ruleSearch').value.trim().toLowerCase();const found=topics.filter(t=>(t.title+' '+t.terms+' '+t.examples).toLowerCase().includes(q));document.getElementById('topics').innerHTML=found.map(t=>'<article class="rule-topic"><h3>'+esc(t.title)+'</h3><p>'+esc(t.examples)+'</p><a href="'+officialVideoBook+'" target="_blank" rel="noopener">View official examples ↗</a></article>').join('');document.getElementById('noTopics').hidden=found.length>0}
+document.getElementById('ruleSearch').addEventListener('input',renderTopics);renderTopics();
+</script>
+</body></html>
