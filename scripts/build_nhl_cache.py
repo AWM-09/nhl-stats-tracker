@@ -131,6 +131,34 @@ print(f"Cache complete: {success} successful, {failures} failed.")
 if success == 0:
     raise SystemExit("No NHL data was cached; refusing to deploy an empty data cache.")
 
+# Aggregate the cached team summaries across each franchise's historical team
+# IDs. This gives the team hub a single, fast season-history file per franchise.
+history_dir = ROOT / "team-history"
+history_dir.mkdir(parents=True, exist_ok=True)
+franchise_history = {code: {} for code in TEAM_CODES}
+for year in YEARS:
+    for phase, key in ((2, "regular"), (3, "playoffs")):
+        source = OUT / f"{year}-{phase}-team.json"
+        try:
+            payload = json.loads(source.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for row in payload.get("data", []):
+            code = team_id_to_code.get(int(row.get("teamId", -1)))
+            if not code:
+                continue
+            season = franchise_history[code].setdefault(
+                year, {"year": year, "regular": None, "playoffs": None}
+            )
+            season[key] = row
+for code, seasons in franchise_history.items():
+    target = history_dir / f"{code}.json"
+    target.write_text(json.dumps({
+        "team": code,
+        "source": "NHL Stats REST team summaries grouped by NHL franchise ID",
+        "seasons": sorted(seasons.values(), key=lambda item: item["year"], reverse=True),
+    }, separators=(",", ":")), encoding="utf-8")
+print(f"Cached full team history for {len(franchise_history)} franchises.")
 
 # Cache the entire current NHL season as weekly schedule snapshots for the full calendar.
 today = datetime.now(timezone.utc).date()

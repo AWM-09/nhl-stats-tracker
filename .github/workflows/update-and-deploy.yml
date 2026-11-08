@@ -107,6 +107,17 @@ jobs:
                   elif suffix == "roster" and not isinstance(payload, dict):
                       raise SystemExit(f"Unexpected team roster schema: {path}")
           print(f"Validated {len(teams)} team caches; {len(errors)} are unavailable from the upstream NHL API and will show as unavailable in the UI.")
+          history_root = Path("site/data/team-history")
+          for code in teams:
+              history_path = history_root / f"{code}.json"
+              if not history_path.is_file():
+                  raise SystemExit(f"Missing team history cache: {history_path}")
+              history = json.loads(history_path.read_text(encoding="utf-8"))
+              if history.get("team") != code or not isinstance(history.get("seasons"), list) or not history["seasons"]:
+                  raise SystemExit(f"Invalid or empty team history cache: {history_path}")
+              if any(not isinstance(season.get("year"), int) for season in history["seasons"]):
+                  raise SystemExit(f"Invalid season entry in team history cache: {history_path}")
+          print(f"Validated full franchise history caches for {len(teams)} teams.")
           h2h_root = Path("site/data/h2h")
           pair_files = list(h2h_root.glob("*.json"))
           expected_pairs = len(teams) * (len(teams) - 1) // 2
@@ -146,5 +157,3 @@ jobs:
 
       - name: Deploy website
         uses: actions/deploy-pages@v4
-        with:
-          timeout: 600000
