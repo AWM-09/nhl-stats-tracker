@@ -27,12 +27,12 @@ jobs:
       - name: Validate required platform files
         run: |
           set -euo pipefail
-          for file in index.html tracker.html player.html teams.html team.html h2h.html teams.js team.js h2h.js research.html calendar.html news.html records.html health.html predictions.html rulebook.html accuracy.html search.html nhl.css nhl.js favicon.svg; do
+          for file in index.html tracker.html player.html teams.html team.html h2h.html teams.js team.js h2h.js research.html calendar.html news.html records.html health.html predictions.html rulebook.html accuracy.html search.html video-studio.html video-studio.js nhl.css nhl.js favicon.svg; do
             test -s "$file" || { echo "Missing required platform file: $file"; exit 1; }
           done
           grep -qi 'NHL' index.html
           grep -q 'NHL Stats' tracker.html
-          for file in nhl.js teams.js team.js h2h.js; do node --check "$file"; done
+          for file in nhl.js teams.js team.js h2h.js video-studio.js; do node --check "$file"; done
 
       - name: Validate inline JavaScript in dashboard pages
         run: |
@@ -45,7 +45,7 @@ jobs:
           pages = [
               "index.html", "tracker.html", "player.html", "teams.html", "team.html", "h2h.html",
               "research.html", "calendar.html",
-              "news.html", "records.html", "health.html", "predictions.html", "rulebook.html", "accuracy.html", "search.html"
+              "news.html", "records.html", "health.html", "predictions.html", "rulebook.html", "accuracy.html", "search.html", "video-studio.html"
           ]
           for page in pages:
               source = Path(page).read_text(encoding="utf-8")
@@ -81,7 +81,7 @@ jobs:
                   raise SystemExit(f"Invalid weekly schedule cache: {path}")
           print(f"Validated {len(weeks)} full-season calendar weeks.")
           PY
-          cp index.html tracker.html player.html teams.html team.html h2h.html research.html calendar.html news.html records.html health.html predictions.html rulebook.html accuracy.html search.html nhl.css nhl.js teams.js team.js h2h.js favicon.svg site/
+          cp index.html tracker.html player.html teams.html team.html h2h.html research.html calendar.html news.html records.html health.html predictions.html rulebook.html accuracy.html search.html video-studio.html video-studio.js nhl.css nhl.js teams.js team.js h2h.js favicon.svg site/
           python3 - <<'PY'
           import json
           from pathlib import Path
