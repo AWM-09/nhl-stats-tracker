@@ -27,7 +27,7 @@ jobs:
       - name: Validate required platform files
         run: |
           set -euo pipefail
-          for file in index.html tracker.html player.html teams.html team.html h2h.html teams.js team.js h2h.js research.html calendar.html news.html records.html health.html predictions.html rulebook.html nhl.css nhl.js favicon.svg; do
+          for file in index.html tracker.html player.html teams.html team.html h2h.html teams.js team.js h2h.js research.html calendar.html news.html records.html health.html predictions.html rulebook.html accuracy.html search.html nhl.css nhl.js favicon.svg; do
             test -s "$file" || { echo "Missing required platform file: $file"; exit 1; }
           done
           grep -qi 'NHL' index.html
@@ -45,7 +45,7 @@ jobs:
           pages = [
               "index.html", "tracker.html", "player.html", "teams.html", "team.html", "h2h.html",
               "research.html", "calendar.html",
-              "news.html", "records.html", "health.html", "predictions.html", "rulebook.html"
+              "news.html", "records.html", "health.html", "predictions.html", "rulebook.html", "accuracy.html", "search.html"
           ]
           for page in pages:
               source = Path(page).read_text(encoding="utf-8")
@@ -81,7 +81,7 @@ jobs:
                   raise SystemExit(f"Invalid weekly schedule cache: {path}")
           print(f"Validated {len(weeks)} full-season calendar weeks.")
           PY
-          cp index.html tracker.html player.html teams.html team.html h2h.html research.html calendar.html news.html records.html health.html predictions.html rulebook.html nhl.css nhl.js teams.js team.js h2h.js favicon.svg site/
+          cp index.html tracker.html player.html teams.html team.html h2h.html research.html calendar.html news.html records.html health.html predictions.html rulebook.html accuracy.html search.html nhl.css nhl.js teams.js team.js h2h.js favicon.svg site/
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -136,6 +136,20 @@ jobs:
                   raise SystemExit(f"Incomplete score/date in all-time H2H data: {path}")
               total_games += len(games)
           print(f"Validated {len(pair_files)} all-time H2H pair files with {total_games} completed games.")
+          PY
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          games = sorted(Path("site/data/games/by-season").glob("*.json"))
+          if not games:
+              raise SystemExit("Historical game cache is empty.")
+          for path in games:
+              payload = json.loads(path.read_text(encoding="utf-8"))
+              if not isinstance(payload.get("games"), list):
+                  raise SystemExit(f"Invalid historical game cache: {path}")
+              if any(not game.get("gameDate") or game.get("homeScore") is None or game.get("awayScore") is None or game.get("home") == game.get("away") for game in payload["games"]):
+                  raise SystemExit(f"Incomplete historical game data: {path}")
+          print(f"Validated {len(games)} season game caches.")
           PY
           if [ -d data ]; then cp -R data site/data; fi
           GENERATED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"

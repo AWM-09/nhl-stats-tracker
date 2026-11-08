@@ -83,7 +83,10 @@ if not isinstance(all_games, list) or not all_games or len(all_games) != int(gam
     raise SystemExit("All-time NHL game cache is incomplete or has an unexpected schema.")
 h2h_dir = ROOT / "h2h"
 h2h_dir.mkdir(parents=True, exist_ok=True)
+game_dir = ROOT / "games" / "by-season"
+game_dir.mkdir(parents=True, exist_ok=True)
 pair_games = {tuple(sorted(pair)): [] for pair in itertools.combinations(TEAM_CODES, 2)}
+season_games = {}
 for game in all_games:
     home_id, away_id = int(game.get("homeTeamId", 0)), int(game.get("visitingTeamId", 0))
     home_code, away_code = team_id_to_code.get(home_id), team_id_to_code.get(away_id)
@@ -96,11 +99,26 @@ for game in all_games:
         "homeTeam": {"franchiseCode": home_code, "name": team_id_to_name.get(home_id), "score": game.get("homeScore")},
         "awayTeam": {"franchiseCode": away_code, "name": team_id_to_name.get(away_id), "score": game.get("visitingScore")},
     })
+    season_id = str(game.get("season") or "")
+    start_year = season_id[:4]
+    if len(start_year) == 4 and start_year.isdigit():
+        season_games.setdefault(start_year, []).append({
+            "id": game.get("id"), "gameDate": game.get("gameDate"),
+            "season": game.get("season"), "gameType": game.get("gameType"),
+            "home": home_code, "away": away_code,
+            "homeScore": game.get("homeScore"), "awayScore": game.get("visitingScore"),
+            "lastPeriodType": game.get("lastPeriodType") or game.get("gameOutcome", {}).get("lastPeriodType"),
+        })
 for (first, second), games in pair_games.items():
     games.sort(key=lambda item: (item.get("gameDate") or "", int(item.get("id") or 0)), reverse=True)
     target = h2h_dir / f"{first}-{second}.json"
     target.write_text(json.dumps({"first": first, "second": second, "source": "NHL Stats REST game and franchise tables", "games": games}, separators=(",", ":")), encoding="utf-8")
 print(f"Cached all-time NHL matchup history for {len(pair_games)} franchise pairs ({sum(map(len, pair_games.values()))} completed games).")
+for start_year, games in season_games.items():
+    games.sort(key=lambda item: (item.get("gameDate") or "", int(item.get("id") or 0)))
+    target = game_dir / f"{start_year}.json"
+    target.write_text(json.dumps({"seasonStart": int(start_year), "source": "NHL Stats REST game and franchise tables", "games": games}, separators=(",", ":")), encoding="utf-8")
+print(f"Cached completed game results for {len(season_games)} seasons ({sum(map(len, season_games.values()))} games).")
 
 success = failures = 0
 for year in YEARS:
