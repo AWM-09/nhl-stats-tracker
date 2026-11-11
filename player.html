@@ -122,4 +122,4 @@ p$('backBtn').onclick=()=>{p$('profileSection').classList.add('hidden');p$('sear
 p$('profileSeason').onchange=renderSelectedSeason;p$('profilePhase').onchange=()=>{activePhase=Number(p$('profilePhase').value);searchPlayersForActive()};
 async function searchPlayersForActive(){if(!activePlayer)return;const q=activePlayer.id;const collected=[];for(let i=0;i<years.length;i+=8){const batch=await Promise.all(years.slice(i,i+8).map(y=>seasonRows(y,activePhase,activeKind)));for(const rs of batch)collected.push(...rs)}const refreshed=findMatches(collected,q,activeKind).find(x=>x.id===q);if(refreshed){activePlayer=refreshed;const seasons=[...new Set(refreshed.rows.map(r=>Math.floor(Number(r.seasonId||0)/10000)).filter(Boolean))].sort((a,b)=>b-a);p$('profileSeason').innerHTML='<option value="career">Entire career</option>'+seasons.map(y=>'<option value="'+y+'">'+seasonLabel(y)+'</option>').join('');p$('profileSeason').value='career';renderSelectedSeason()}else{activePlayer.rows=[];renderSelectedSeason()}}
 p$('loadLogBtn').onclick=loadGameLog;
-</script></body></html>
+</script><script src="./recommendation.js?v=recommendation-20261111"></script></body></html>

@@ -31,4 +31,4 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 function renderTopics(){const q=document.getElementById('ruleSearch').value.trim().toLowerCase();const found=topics.filter(t=>(t.title+' '+t.terms+' '+t.examples).toLowerCase().includes(q));document.getElementById('topics').innerHTML=found.map(t=>'<article class="rule-topic"><h3>'+esc(t.title)+'</h3><p>'+esc(t.examples)+'</p><a href="'+officialVideoBook+'" target="_blank" rel="noopener">View official examples ↗</a></article>').join('');document.getElementById('noTopics').hidden=found.length>0}
 document.getElementById('ruleSearch').addEventListener('input',renderTopics);renderTopics();
 </script>
-</body></html>
+<script src="./recommendation.js?v=recommendation-20261111"></script></body></html>

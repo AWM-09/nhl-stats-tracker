@@ -18,4 +18,4 @@ if(category==='all'||category==='games'){const years=career?SEASONS.slice().reve
 results=results.slice(0,limit);s$('results').innerHTML=resultTable(results);s$('resultCount').textContent=results.length+' result'+(results.length===1?'':'s');setStatus('Search complete. '+results.length+' matching archive results.','good')
 }catch(e){s$('results').innerHTML=errorBox(e);setStatus('Search incomplete: '+e.message,'bad')}finally{s$('search').disabled=false}}
 s$('search').onclick=runSearch;s$('query').addEventListener('keydown',e=>{if(e.key==='Enter')runSearch()});
-</script></body></html>
+</script><script src="./recommendation.js?v=recommendation-20261111"></script></body></html>
