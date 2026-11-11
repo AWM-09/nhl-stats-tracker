@@ -81,7 +81,7 @@ jobs:
                   raise SystemExit(f"Invalid weekly schedule cache: {path}")
           print(f"Validated {len(weeks)} full-season calendar weeks.")
           PY
-          cp index.html tracker.html player.html teams.html team.html h2h.html research.html calendar.html news.html records.html health.html predictions.html rulebook.html accuracy.html search.html video-studio.html video-studio.js nhl.css nhl.js teams.js team.js h2h.js favicon.svg site/
+          cp index.html tracker.html player.html teams.html team.html h2h.html research.html calendar.html news.html records.html health.html predictions.html rulebook.html accuracy.html search.html video-studio.html video-studio.js recommendation.js nhl.css nhl.js teams.js team.js h2h.js favicon.svg site/
           python3 - <<'PY'
           import json
           from pathlib import Path
